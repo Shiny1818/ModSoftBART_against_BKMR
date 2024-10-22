@@ -1,0 +1,12 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+.gitignore
+^.git/
+README.md
+README.Rmd
+.Rhistory
+cran-comments.md
+^CRAN-SUBMISSION$
+^doc$
+^Meta$
+^CRAN-RELEASE$
