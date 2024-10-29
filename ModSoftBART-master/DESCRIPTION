@@ -1,0 +1,21 @@
+Package: ModSoftBart
+Type: Package
+Title: Implements the SoftBart Algorithm with group handling
+Version: 1.0.1
+Authors@R: 
+  person("Kaizong", "Ye", email = "kaizong.ye@nih.gov", role = c("aut", "cre"))
+Date: 2024-10-28
+Encoding: UTF-8
+Description: This package is an extended version of the 'SoftBart' package by Antonio R. Linero. It retains the original package's functionality, implementing the SoftBart model of described by Linero and Yang (2018) <doi:10.1111/rssb.12293>, with modifications to incorporate group-handling techniques discussed in the same paper.
+License: GPL (>= 2)
+Imports:
+    Rcpp (>= 0.12.9),
+    glmnet (>= 4.0.0),
+    scales (>= 1.1.1),
+    methods,
+    caret,
+    truncnorm,
+    progress,
+    MASS
+LinkingTo: Rcpp, RcppArmadillo
+RoxygenNote: 7.3.2

@@ -13,7 +13,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 
 // rmvnorm
 arma::vec rmvnorm(const arma::vec& mean, const arma::mat& Precision);
-RcppExport SEXP _SoftBart_rmvnorm(SEXP meanSEXP, SEXP PrecisionSEXP) {
+RcppExport SEXP _ModSoftBart_rmvnorm(SEXP meanSEXP, SEXP PrecisionSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -25,7 +25,7 @@ END_RCPP
 }
 // choll
 arma::mat choll(const arma::mat& Sigma);
-RcppExport SEXP _SoftBart_choll(SEXP SigmaSEXP) {
+RcppExport SEXP _ModSoftBart_choll(SEXP SigmaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -36,7 +36,7 @@ END_RCPP
 }
 // update_sigma
 double update_sigma(const arma::vec& r, double sigma_hat, double sigma_old, double temperature);
-RcppExport SEXP _SoftBart_update_sigma(SEXP rSEXP, SEXP sigma_hatSEXP, SEXP sigma_oldSEXP, SEXP temperatureSEXP) {
+RcppExport SEXP _ModSoftBart_update_sigma(SEXP rSEXP, SEXP sigma_hatSEXP, SEXP sigma_oldSEXP, SEXP temperatureSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -50,7 +50,7 @@ END_RCPP
 }
 // rlgam
 double rlgam(double shape);
-RcppExport SEXP _SoftBart_rlgam(SEXP shapeSEXP) {
+RcppExport SEXP _ModSoftBart_rlgam(SEXP shapeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -61,7 +61,7 @@ END_RCPP
 }
 // SoftBart
 List SoftBart(const arma::mat& X, const arma::vec& Y, const arma::mat& X_test, const arma::uvec& group, double alpha, double alpha_comp, double beta, double gamma, double sigma, double shape, double width, int num_tree, double sigma_hat, double k, double alpha_scale, const arma::vec& alpha_comp_scale, double alpha_shape_1, double alpha_shape_2, double alpha_comp_shape_1, double alpha_comp_shape_2, double tau_rate, double num_tree_prob, double temperature, const arma::vec& weights, int num_burn, int num_thin, int num_save, int num_print, bool update_sigma_mu, bool update_s, bool update_alpha, bool update_beta, bool update_gamma, bool update_tau, bool update_tau_mean, bool update_num_tree, bool update_sigma);
-RcppExport SEXP _SoftBart_SoftBart(SEXP XSEXP, SEXP YSEXP, SEXP X_testSEXP, SEXP groupSEXP, SEXP alphaSEXP, SEXP alpha_compSEXP, SEXP betaSEXP, SEXP gammaSEXP, SEXP sigmaSEXP, SEXP shapeSEXP, SEXP widthSEXP, SEXP num_treeSEXP, SEXP sigma_hatSEXP, SEXP kSEXP, SEXP alpha_scaleSEXP, SEXP alpha_comp_scaleSEXP, SEXP alpha_shape_1SEXP, SEXP alpha_shape_2SEXP, SEXP alpha_comp_shape_1SEXP, SEXP alpha_comp_shape_2SEXP, SEXP tau_rateSEXP, SEXP num_tree_probSEXP, SEXP temperatureSEXP, SEXP weightsSEXP, SEXP num_burnSEXP, SEXP num_thinSEXP, SEXP num_saveSEXP, SEXP num_printSEXP, SEXP update_sigma_muSEXP, SEXP update_sSEXP, SEXP update_alphaSEXP, SEXP update_betaSEXP, SEXP update_gammaSEXP, SEXP update_tauSEXP, SEXP update_tau_meanSEXP, SEXP update_num_treeSEXP, SEXP update_sigmaSEXP) {
+RcppExport SEXP _ModSoftBart_SoftBart(SEXP XSEXP, SEXP YSEXP, SEXP X_testSEXP, SEXP groupSEXP, SEXP alphaSEXP, SEXP alpha_compSEXP, SEXP betaSEXP, SEXP gammaSEXP, SEXP sigmaSEXP, SEXP shapeSEXP, SEXP widthSEXP, SEXP num_treeSEXP, SEXP sigma_hatSEXP, SEXP kSEXP, SEXP alpha_scaleSEXP, SEXP alpha_comp_scaleSEXP, SEXP alpha_shape_1SEXP, SEXP alpha_shape_2SEXP, SEXP alpha_comp_shape_1SEXP, SEXP alpha_comp_shape_2SEXP, SEXP tau_rateSEXP, SEXP num_tree_probSEXP, SEXP temperatureSEXP, SEXP weightsSEXP, SEXP num_burnSEXP, SEXP num_thinSEXP, SEXP num_saveSEXP, SEXP num_printSEXP, SEXP update_sigma_muSEXP, SEXP update_sSEXP, SEXP update_alphaSEXP, SEXP update_betaSEXP, SEXP update_gammaSEXP, SEXP update_tauSEXP, SEXP update_tau_meanSEXP, SEXP update_num_treeSEXP, SEXP update_sigmaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -108,7 +108,7 @@ END_RCPP
 }
 // do_mh
 bool do_mh(double loglik_new, double loglik_old, double new_to_old, double old_to_new);
-RcppExport SEXP _SoftBart_do_mh(SEXP loglik_newSEXP, SEXP loglik_oldSEXP, SEXP new_to_oldSEXP, SEXP old_to_newSEXP) {
+RcppExport SEXP _ModSoftBart_do_mh(SEXP loglik_newSEXP, SEXP loglik_oldSEXP, SEXP new_to_oldSEXP, SEXP old_to_newSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -124,17 +124,17 @@ END_RCPP
 RcppExport SEXP _rcpp_module_boot_mod_forest();
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_SoftBart_rmvnorm", (DL_FUNC) &_SoftBart_rmvnorm, 2},
-    {"_SoftBart_choll", (DL_FUNC) &_SoftBart_choll, 1},
-    {"_SoftBart_update_sigma", (DL_FUNC) &_SoftBart_update_sigma, 4},
-    {"_SoftBart_rlgam", (DL_FUNC) &_SoftBart_rlgam, 1},
-    {"_SoftBart_SoftBart", (DL_FUNC) &_SoftBart_SoftBart, 37},
-    {"_SoftBart_do_mh", (DL_FUNC) &_SoftBart_do_mh, 4},
+    {"_ModSoftBart_rmvnorm", (DL_FUNC) &_ModSoftBart_rmvnorm, 2},
+    {"_ModSoftBart_choll", (DL_FUNC) &_ModSoftBart_choll, 1},
+    {"_ModSoftBart_update_sigma", (DL_FUNC) &_ModSoftBart_update_sigma, 4},
+    {"_ModSoftBart_rlgam", (DL_FUNC) &_ModSoftBart_rlgam, 1},
+    {"_ModSoftBart_SoftBart", (DL_FUNC) &_ModSoftBart_SoftBart, 37},
+    {"_ModSoftBart_do_mh", (DL_FUNC) &_ModSoftBart_do_mh, 4},
     {"_rcpp_module_boot_mod_forest", (DL_FUNC) &_rcpp_module_boot_mod_forest, 0},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_SoftBart(DllInfo *dll) {
+RcppExport void R_init_ModSoftBart(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }

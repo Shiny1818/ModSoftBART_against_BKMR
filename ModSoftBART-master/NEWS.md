@@ -11,7 +11,7 @@ output:
   by running `browseVignettes('SoftBart')`.
   
 
-## SoftBart 1.1.1
+## ModSoftBart 1.0.1
 
 - Introduced `omega_group` in `Hypers` to store the within-group components probability profile, and `alpha_comp` to control the sparsity across components.
 

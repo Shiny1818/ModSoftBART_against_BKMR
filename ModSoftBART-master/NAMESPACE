@@ -1,4 +1,4 @@
-useDynLib(SoftBart)
+useDynLib(ModSoftBart)
 importFrom(glmnet, cv.glmnet)
 importFrom(glmnet, predict.glmnet)
 importFrom(graphics, par)
