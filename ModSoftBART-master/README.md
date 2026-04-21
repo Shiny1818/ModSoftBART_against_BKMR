@@ -65,5 +65,5 @@ if (!requireNamespace("remotes", quietly = TRUE)) {
   install.packages("remotes")
 
 }
-remotes::install_github("yourname/ModSoftBart")
+remotes::install_github("Shiny1818/ModSoftBART_against_BKMR", subdir = "ModSoftBART-master")
 ```
