@@ -1,12 +1,14 @@
+Modified General Soft BART Model 
+
 # ModSoftBart
 
 `ModSoftBart` extends the general soft BART regression framework to support explicit grouped predictor structure in models that combine linear covariate effects with a nonparametric tree ensemble function.
 
 ## Overview
 
-The original `SoftBart` package includes separate main functions for regression, probit, and general regression models. In the original package, the general regression interface allows linear covariate effects to be modeled jointly with the nonparametric tree-based mean function.
+The original `SoftBart` package includes separate functions for regression, probit, and general regression models. In the original package, `gsoftbart_regression()` is the general regression interface, allowing linear covariate effects to be modeled jointly with the nonparametric tree-based mean function.
 
-`ModSoftBart` builds on that general modeling framework. Starting from the structure of `gsoftbart_regression()`, the package introduces explicit handling of grouped predictors through hierarchical prior updates and related hyperparameter modifications. It also provides a corresponding binary outcome model through `pb_gsbart()`.
+`ModSoftBart` builds on that general modeling framework. Starting from `gsoftbart_regression()` structure, the package introduces explicit handling of grouped predictors through hierarchical prior updates and related hyperparameter modifications. It also provides a corresponding probit model `pb_gsbart()`.
 
 ## Main functions
 

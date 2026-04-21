@@ -11,7 +11,7 @@
 
 #' @export
 #' 
-calPIPs_gsbart <- function(fit = fit_gsbart, group = TRUE, vars = Ztr){
+calPIPs_gsbart <- function(fit, group = NULL, vars = NULL){
   
   if(group){
     group_counts_mat <- as.matrix(do.call(rbind, lapply(1:length(fit$tree_counts), 

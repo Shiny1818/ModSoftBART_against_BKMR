@@ -1,8 +1,3 @@
-#######################################################
-# install updated package ModSoftBart first. Using the "~/ModSoftBart/ModSoftBart_1.0.1.tar.gz" file to complete the installation.
-library(ModSoftBart)
-
-
 
 ################################################################
 ################### Simulation Example #########################
