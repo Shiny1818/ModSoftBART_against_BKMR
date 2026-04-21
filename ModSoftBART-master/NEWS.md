@@ -3,20 +3,15 @@ output:
   pdf_document: default
   html_document: default
 ---
-# SoftBart
-
-## SoftBart 1.0.1
-
-- Added vignette to the package explaining generic usage. This can be accessed
-  by running `browseVignettes('SoftBart')`.
-  
 
 ## ModSoftBart 1.0.1
 
-- Introduced `omega_group` in `Hypers` to store the within-group components probability profile, and `alpha_comp` to control the sparsity across components.
+- Added `omega_group` to `Hypers` to store the within-group component probability profile, and `alpha_comp` to control sparsity across components.
 
-- Introduced new functions `UpdateOmegaGroup()`, `get_var_counts_by_variable()` to facilitate handling the scenario where grouping exists.
-- Updated `SampleVar()`, `UpdateS()` and `get_tree_counts()` functions so as to implement the hierarchical sampling by use of Dirichlet prior when grouping exists. 
-  Now the output type of `get_tree_counts` is a Rcpp::List rather than a matrix.
-- Updated `UpdateAlpha()` function so that when `update_alpha = TRUE`, the hyperparameters in Dirichlet priors are updated with scaled beta prime prior. 
+- Added `UpdateOmegaGroup()` and `get_var_counts_by_variable()` to support grouped predictors.
+
+- Updated `SampleVar()`, `UpdateS()`, and `get_tree_counts()` to implement hierarchical sampling under grouped predictors using a Dirichlet prior. When `group` is not `NULL`, `get_tree_counts()` now returns an `Rcpp::List` instead of a matrix.
+
+- Updated `UpdateAlpha()` so that, when `update_alpha = TRUE`, both group and components Dirichlet prior hyperparameters are updated using a scaled beta-prime prior.
+
 

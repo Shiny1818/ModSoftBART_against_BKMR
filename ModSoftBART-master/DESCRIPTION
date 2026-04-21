@@ -1,12 +1,29 @@
 Package: ModSoftBart
 Type: Package
-Title: Implements the SoftBart Algorithm with group handling
+Title: Soft Bayesian Additive Regression Trees with Linear Covariates and Grouped Predictors
 Version: 1.0.1
-Authors@R: 
-  person("Kaizong", "Ye", email = "kaizong.ye@nih.gov", role = c("aut", "cre"))
-Date: 2024-10-28
+Authors@R: c(
+    person(
+      given = "Kaizong",
+      family = "Ye",
+      email = "thecurveridge@hotmail.com",
+      role = c("aut", "cre")
+    ),
+    person(
+      given = "Antonio R.",
+      family = "Linero",
+      role = "aut",
+      comment = "Original author of the SoftBart package"
+    )
+ )
+Date: 2024-10-08
 Encoding: UTF-8
-Description: This package is an extended version of the 'SoftBart' package by Antonio R. Linero. It retains the original package's functionality, implementing the SoftBart model of described by Linero and Yang (2018) <doi:10.1111/rssb.12293>, with modifications to incorporate group-handling techniques discussed in the same paper.
+Description: Implements an extension of the general modeling framework
+    in the 'SoftBart' package for models combining linear covariate
+    effects with a nonparametric tree-based mean function. The package
+    adds explicit handling of grouped predictors through hierarchical
+    prior updates and provides functionality for both regression and
+    binary outcome models.
 License: GPL (>= 2)
 Imports:
     Rcpp (>= 0.12.9),
@@ -16,6 +33,7 @@ Imports:
     caret,
     truncnorm,
     progress,
+    zeallot,
     MASS
 LinkingTo: Rcpp, RcppArmadillo
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3

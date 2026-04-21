@@ -1,4 +1,4 @@
-#include "soft_bart.h"
+#include "mod_softbart.h"
 
 using namespace Rcpp;
 using namespace arma;

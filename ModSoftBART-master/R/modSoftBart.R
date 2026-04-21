@@ -5,8 +5,9 @@
 #'
 #' @param X A matrix of training data covariates.
 #' @param Y A vector of training data responses.
-#' @param group Allows for grouping of covariates with shared splitting proportions, which is useful for categorical dummy variables. For each column of \code{X}, \code{group} gives the associated group.
-#' @param alpha Positive constant controlling the sparsity level.
+#' @param group group indicators. For each column of \code{X}, \code{group} gives the associated group.
+#' @param alpha Positive constant controlling the sparsity level among groups if group was specified.
+#' @param alpha_comp Positive constant controlling the sparsity level across components if group exists.
 #' @param beta Parameter penalizing tree depth in the branching process prior.
 #' @param gamma Parameter penalizing new nodes in the branching process prior.
 #' @param k Related to the signal-to-noise ratio, \code{sigma_mu = 0.5 / (sqrt(num_tree) * k)}. BART defaults to \code{k = 2} after applying the max/min normalization to the outcome.
@@ -14,9 +15,12 @@
 #' @param shape Shape parameter for gating probabilities.
 #' @param width Bandwidth of gating probabilities.
 #' @param num_tree Number of trees in the ensemble.
-#' @param alpha_scale Scale of the prior for \code{alpha}; if not provided, defaults to the number of predictors.
+#' @param alpha_scale Scale of the prior for \code{alpha}; if not provided, defaults to the number of groups.
+#' @param alpha_comp_scale Scale of the prior for \code{alpha}; if not provided, defaults to the number of predictors in each group.
 #' @param alpha_shape_1 Shape parameter for prior on \code{alpha}; if not provided, defaults to 0.5.
 #' @param alpha_shape_2 Shape parameter for prior on \code{alpha}; if not provided, defaults to 1.0.
+#' @param alpha_comp_shape_1 Shape parameter for prior on \code{alpha_comp}; if not provided, defaults to 0.5.
+#' @param alpha_comp_shape_2 Shape parameter for prior on \code{alpha_comp}; if not provided, defaults to 1.0.
 #' @param tau_rate Rate parameter for the bandwidths of the trees with an exponential prior; defaults to 10.
 #' @param num_tree_prob Parameter for geometric prior on number of tree.
 #' @param temperature The temperature applied to the posterior distribution; set to 1 unless you know what you are doing.
@@ -93,7 +97,7 @@ Hypers <- function(X,Y, group = NULL, alpha = 1, alpha_comp = 1, beta = 2, gamma
 #' @param update_sigma_mu If \code{TRUE}, \code{sigma_mu} is  updated, with a half-Cauchy prior on \code{sigma_mu} centered at the initial guess.
 #' @param update_sigma If \code{TRUE}, \code{sigma} is updated, with a half-Cauchy prior on \code{sigma} centered at the initial guess.
 #' @param update_s If \code{TRUE}, \code{s} is updated using the Dirichlet prior \eqn{s \sim D(\alpha / P, \ldots, \alpha / P)} where \eqn{P} is the number of covariates.
-#' @param update_alpha If \code{TRUE}, \code{alpha} is updated using a scaled beta prime prior.
+#' @param update_alpha If \code{TRUE}, \code{alpha} and \code{alpha_comp} are updated using a scaled beta prime prior.
 #' @param update_beta If \code{TRUE}, \code{beta} is updated using a normal prior with mean 0 and variance 4.
 #' @param update_gamma If \code{TRUE}, gamma is updated using a Uniform(0.5, 1) prior.
 #' @param update_tau If \code{TRUE}, the bandwidth \code{tau} is updated for each tree
@@ -139,193 +143,6 @@ unnormalize_bart <- function(z, a, b) {
   return(y)
 }
 
-#' Fits the SoftBart model
-#'
-#' Runs the Markov chain for the semiparametric Gaussian model \deqn{Y = r(X) +
-#' \epsilon}{Y = r(X) + epsilon} and collects the output, where \eqn{r(x)}{r(x)}
-#' is modeled using a soft BART model.
-#'
-#' @param X A matrix of training data covariates.
-#' @param Y A vector of training data responses.
-#' @param X_test A matrix of test data covariates
-#' @param hypers A ;ist of hyperparameter values obtained from \code{Hypers} function
-#' @param opts A list of MCMC chain settings obtained from \code{Opts} function
-#' @param verbose If \code{TRUE}, progress of the chain will be printed to the console.
-#'
-#' @return Returns a list with the following components:
-#' \itemize{
-#'   \item \code{y_hat_train}: predicted values for the training data for each iteration of the chain.
-#'   \item \code{y_hat_test}: predicted values for the test data for each iteration of the chain.
-#'   \item \code{y_hat_train_mean}: predicted values for the training data, averaged over iterations.
-#'   \item \code{y_hat_test_mean}: predicted values for the test data, averaged over iterations.
-#'   \item \code{sigma}: posterior samples of the error standard deviations.
-#'   \item \code{sigma_mu}: posterior samples of \code{sigma_mu}, the standard deviation of the leaf node parameters.
-#'   \item \code{s}: posterior samples of \code{s}.
-#'   \item \code{alpha}: posterior samples of \code{alpha}.
-#'   \item \code{beta}: posterior samples of \code{beta}.
-#'   \item \code{gamma}: posterior samples of \code{gamma}.
-#'   \item \code{k}: posterior samples of \code{k = 0.5 / (sqrt(num_tree) * sigma_mu)}
-#'   \item \code{num_leaves_final}: the number of leaves for each tree at the final iteration.
-#' }
-#' 
-#' @examples
-#' 
-#' ## NOTE: SET NUMBER OF BURN IN AND SAMPLE ITERATIONS HIGHER IN PRACTICE
-#' 
-#' num_burn <- 10 ## Should be ~ 5000
-#' num_save <- 10 ## Should be ~ 5000
-#' 
-#' set.seed(1234)
-#' f_fried <- function(x) 10 * sin(pi * x[,1] * x[,2]) + 20 * (x[,3] - 0.5)^2 + 
-#'   10 * x[,4] + 5 * x[,5]
-#' 
-#' gen_data <- function(n_train, n_test, P, sigma) {
-#'   X <- matrix(runif(n_train * P), nrow = n_train)
-#'   mu <- f_fried(X)
-#'   X_test <- matrix(runif(n_test * P), nrow = n_test)
-#'   mu_test <- f_fried(X_test)
-#'   Y <- mu + sigma * rnorm(n_train)
-#'   Y_test <- mu_test + sigma * rnorm(n_test)
-#'   
-#'   return(list(X = X, Y = Y, mu = mu, X_test = X_test, Y_test = Y_test, mu_test = mu_test))
-#' }
-#' 
-#' ## Simiulate dataset
-#' sim_data <- gen_data(250, 100, 1000, 1)
-#' 
-#' ## Fit the model
-#' fit <- softbart(X = sim_data$X, Y = sim_data$Y, X_test = sim_data$X_test, 
-#'                 hypers = Hypers(sim_data$X, sim_data$Y, num_tree = 50, temperature = 1),
-#'                 opts = Opts(num_burn = num_burn, num_save = num_save, update_tau = TRUE))
-#' 
-#' ## Plot the fit (note: interval estimates are not prediction intervals, 
-#' ## so they do not cover the predictions at the nominal rate)
-#' plot(fit)
-#' 
-#' ## Look at posterior model inclusion probabilities for each predictor. 
-#' 
-#' plot(posterior_probs(fit)[["post_probs"]], 
-#'      col = ifelse(posterior_probs(fit)[["post_probs"]] > 0.5, scales::muted("blue"), 
-#'                   scales::muted("green")), 
-#'      pch = 20)
-#' 
-#' 
-#' rmse(fit$y_hat_test_mean, sim_data$mu_test)
-#' rmse(fit$y_hat_train_mean, sim_data$mu)
-#' 
-softbart <- function(X, Y, X_test, hypers = NULL, opts = Opts(), verbose = TRUE) {
-
-  if(is.null(hypers)){
-    hypers <- Hypers(X,Y)
-  }
-
-  ## Normalize Y
-  Z <- normalize_bart(Y)
-
-  ## Quantile normalize X
-  n <- nrow(X)
-  idx_train <- 1:n
-  X_trans <- rbind(X, X_test)
-
-  if(is.data.frame(X_trans)) {
-    print("Preprocessing data frame")
-    preproc_df <- preprocess_df(X_trans)
-    X_trans <- preproc_df$X
-    print("Using default grouping; if this is not desired, preprocess data frame manually using preprocess_df before calling.")
-    hypers$group
-    hypers$group <- preproc_df$group
-  }
-  
-  if(!verbose) {
-    opts$num_print <- .Machine$integer.max
-  }
-
-  X_trans <- quantile_normalize_bart(X_trans)
-  X <- X_trans[idx_train,,drop=FALSE]
-  X_test <- X_trans[-idx_train,,drop=FALSE]
-
-  fit <- SoftBart(X,Z,X_test,
-                  hypers$group,
-                  hypers$alpha,
-                  hypers$beta,
-                  hypers$gamma,
-                  hypers$sigma,
-                  hypers$shape,
-                  hypers$width,
-                  hypers$num_tree,
-                  hypers$sigma_hat,
-                  hypers$k,
-                  hypers$alpha_scale,
-                  hypers$alpha_shape_1,
-                  hypers$alpha_shape_2,
-                  hypers$tau_rate,
-                  hypers$num_tree_prob,
-                  hypers$temperature,
-                  hypers$weights,
-                  opts$num_burn,
-                  opts$num_thin,
-                  opts$num_save,
-                  opts$num_print,
-                  opts$update_sigma_mu,
-                  opts$update_s,
-                  opts$update_alpha,
-                  opts$update_beta,
-                  opts$update_gamma,
-                  opts$update_tau,
-                  opts$update_tau_mean,
-                  opts$update_num_tree,
-                  opts$update_sigma)
-
-
-  a <- min(Y)
-  b <- max(Y)
-
-  fit$y_hat_train <- unnormalize_bart(fit$y_hat_train, a, b)
-  fit$y_hat_test <- unnormalize_bart(fit$y_hat_test, a, b)
-  fit$sigma <- (b - a) * fit$sigma
-  fit$k <- 0.5 / (sqrt(hypers$num_tree) * fit$sigma_mu)
-
-  fit$y_hat_train_mean <- colMeans(fit$y_hat_train)
-  fit$y_hat_test_mean <- colMeans(fit$y_hat_test)
-
-  fit$y <- Y
-
-  class(fit) <- "softbart"
-
-  return(fit)
-
-}
-
-TreeSelect <- function(X,Y, X_test, hypers = NULL, tree_start = 25, opts = Opts()) {
-
-  if(is.null(hypers)){
-    hypers <- Hypers(X,Y)
-  }
-
-  best <- 0;
-
-  hypers$num_tree <- tree_start
-  fit <- softbart(X,Y,X_test,hypers, opts)
-  best <- mean(fit$loglik) + hypers$num_tree * log(1 - hypers$num_tree_prob)
-
-  while(TRUE) {
-    tree_old <- hypers$num_tree
-    tree_new <- 2 * tree_old
-    hypers$num_tree <- tree_new
-    fit <- softbart(X,Y,X,hypers, opts)
-    gof <- mean(fit$loglik) + hypers$num_tree * log(1 - hypers$num_tree_prob)
-    if(gof < best) {
-      break
-    }
-    best <- gof
-  }
-
-  hypers$num_tree <- tree_old
-  hypers$temperature <- 1.0
-  fit <- softbart(X,Y,X_test,hypers, opts)
-
-  return(list(num_tree = tree_old, fit = fit))
-}
 
 GetSigma <- function(X,Y, weights = NULL) {
   
@@ -351,3 +168,17 @@ GetSigma <- function(X,Y, weights = NULL) {
   return(sigma_hat)
 
 }
+
+predict_glmnet <- function (object, newx, s = c("lambda.1se", "lambda.min"), ...) {
+  if (is.numeric(s)) 
+    lambda = s
+  else if (is.character(s)) {
+    s = match.arg(s)
+    lambda = object[[s]]
+    names(lambda) = s
+  }
+  else stop("Invalid form for s")
+  predict(object$glmnet.fit, newx, s = lambda, ...)
+}
+
+
