@@ -1,21 +1,21 @@
-# ModSoftBART
-
-This repository contains the code for the accepted paper  
+This repository contains the code for the accepted paper\
 **“Tailoring Bayesian Additive Regression Trees (BART) for Environmental Mixture Studies”**
 
 ## Contents
 
-- **`ModSoftBART/`**  
+- **`ModSoftBART/`**\
   R package implementing the proposed ModSoftBART method.
 
-- **`simulation/`**  
+- **`empirical/`**\
+  Empirical analysis on NHANES data:
+
+  - `NHANES data analysis.R`
+
+- **`simulation/`**\
   Simulation examples:
+
   - `simulation_example_binary.R`
   - `simulation_example_continuous.R`
-
-- **`empirical/`**  
-  Empirical analysis on NHANES data:
-  - `NHANES data analysis.R`
 
 ## Requirements
 
