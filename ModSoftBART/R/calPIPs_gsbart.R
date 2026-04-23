@@ -1,5 +1,5 @@
 #' Calculate group and component PIPs for a fitted gsbart model
-
+#' 
 #' Computes posterior inclusion probabilities (PIPs) from a fitted \code{gsbart} regression object. The function can return PIPs at the group level and, when applicable, at the component or variable level.
 #' 
 #' @param fit A fitted \code{gsbart} model object. For continuous outcomes, this is typically the object returned by \code{gsbart_regression()}.

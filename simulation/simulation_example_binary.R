@@ -12,7 +12,7 @@ library(zeallot)
 library(caret)
 library(lubridate)
 
-set.seed(19816)
+set.seed(32517)
 SimData_v2 <- function (n = 100, M = 15, sigsq.true = 0.5, beta.true = c(.5, .2), hfun = 3, 
                         Zgen = "norm", indx = c(1:2, 4:6), family = "gaussian") {
   
@@ -147,82 +147,91 @@ SimData_v2 <- function (n = 100, M = 15, sigsq.true = 0.5, beta.true = c(.5, .2)
   dat
 }
 
-
-nsize = 500; msize = 15; hfunc = 1; Zgenr = "corr"; index = c(1:2, 4:6)
-
-dat_train <- SimData_v2(n = nsize, M = msize, hfun = hfunc, Zgen = Zgenr, indx = index)
+dat_train <- SimData_v2(n = nsize, M = msize, sigsq.true = 1, hfun = hfunc, 
+                        Zgen = Zgenr, indx = index, family = "binomial")
 Ytr   <- dat_train$y
 Ztr   <- dat_train$Z
 Xtr   <- dat_train$X
 
-dat_test <- SimData_v2(n = nsize, M = msize, hfun = hfunc, Zgen = Zgenr, indx = index)
+dat_test <- SimData_v2(n = nsize, M = msize, sigsq.true = 1, hfun = hfunc, 
+                       Zgen = Zgenr, indx = index, family = "binomial")
 Ytest <- dat_test$y
 Ztest <- dat_test$Z
 Xtest <- dat_test$X
 
-## BKMR
-start_time1 <- now()
-fitkm <- kmbayes(y=Ytr, Z=Ztr, X=Xtr, iter=10000, verbose=TRUE, varsel=TRUE, 
-                 groups=c(rep(1,times=3), rep(2,times=4), rep(3,times=5),rep(4,times=3)))
-
-h_est_train <- SamplePred(fitkm, Znew = Ztr, Xnew = matrix(rep(0, nrow(Ztr)*ncol(Xtr)), ncol = ncol(Xtr)))
-h_train_bkmr <- colMeans(h_est_train)
-h_est_val <- SamplePred(fitkm, Znew = Ztest, Xnew = matrix(rep(0, nrow(Ztest)*ncol(Xtest)), ncol = ncol(Xtest)))
-h_test_bkmr <- colMeans(h_est_val)
-
-time_taken1 <- as.duration(now() - start_time1)
-
-## General soft BART (gsBART)
-start_time2 <- now()
-
-fit_gsbart <- gsbart_regression(X = Xtr, Y = Ytr, Z = Ztr, Znew = Ztest, Xnew = as.matrix(Xtest), num_tree = 20,
-                                num_burn = 5000, num_save = 500, num_thin = 10, alpha_val = 1e-30, alpha_comp = 1e-10,
-                                group = c(rep(1,times=3), rep(2,times=4), rep(3,times=5),rep(4,times=3)))
-
-h_train_soft <- colMeans(fit_gsbart$h_train)
-h_test_soft <- colMeans(fit_gsbart$h_test)
-
-time_taken2 <- as.duration(now() - start_time2)
-
-################################
-## extract PIPs for both models
-### BKMR
-PIPs_bkmr <- ExtractPIPs(fitkm)
-
-### gsBART
-PIPs_gsbart <- calPIPs_gsbart(fit = fit_gsbart, group = TRUE, vars = Ztr)
-
-
-## evaluation based on the regression of h_hat on h
 h_true_train <- dat_train$h
 h_true_test <- dat_test$h
 
-hfit_bkmr_train <- lm(h_train_bkmr~h_true_train)
+start_time1 <- now()
+fitkm.pb <- try(kmbayes(y = Ytr, Z = Ztr, X = Xtr, iter = 10000, verbose = FALSE, varsel = TRUE, 
+                        groups = group, family = "binomial", 
+                        control.params = list(r.jump2 = 0.5), est.h = TRUE), silent = TRUE)
 
-c(inter_bkmr_train, slope_bkmr_train) %<-% coef(hfit_bkmr_train)
-rs_bkmr_train <- summary(hfit_bkmr_train)$r.squared
-se_bkmr_train <- summary(hfit_bkmr_train)$sigma
+if(!inherits(fitkm.pb, "try-error")){
+  
+  h_est_train <- SamplePred(fitkm.pb, Znew = Ztr, Xnew = matrix(rep(0, nrow(Ztr)*ncol(Xtr)), ncol = ncol(Xtr)))
+  h_train_bkmr <- colMeans(h_est_train)
+  h_est_val <- SamplePred(fitkm.pb, Znew = Ztest, Xnew = matrix(rep(0, nrow(Ztest)*ncol(Xtest)), ncol = ncol(Xtest)))
+  h_test_bkmr <- colMeans(h_est_val)
+  
+  time_taken1 <- as.duration(now() - start_time1)
+  
+  ##############################################################################
+  ## calculate PIPs
+  PIPs_bkmr.pb <- ExtractPIPs(fitkm.pb)
+  ##############################################################################
+  
+  # performance check for BKMR estimates
+  hfit_bkmr_train <- lm(h_train_bkmr~h_true_train)
+  
+  c(inter_bkmr_train, slope_bkmr_train) %<-% coef(hfit_bkmr_train)
+  rs_bkmr_train <- summary(hfit_bkmr_train)$r.squared
+  se_bkmr_train <- summary(hfit_bkmr_train)$sigma
+  
+  
+  hfit_bkmr_test <- lm(h_test_bkmr~h_true_test)
+  
+  c(inter_bkmr_test, slope_bkmr_test) %<-% coef(hfit_bkmr_test)
+  rs_bkmr_test <- summary(hfit_bkmr_test)$r.squared
+  se_bkmr_test <- summary(hfit_bkmr_test)$sigma
+  
+  performance_bkmr <- data.frame(BKMR_train = c(inter_bkmr_train, slope_bkmr_train,
+                                                rs_bkmr_train, se_bkmr_train),
+                                 BKMR_test = c(inter_bkmr_test, slope_bkmr_test,
+                                               rs_bkmr_test, se_bkmr_test))
+  
+  row.names(performance_bkmr) <- c("Intercept", "Slope", "R-squared", "StdError")
+  
+}else{
+  error_msg <- attr(fitkm.pb, "condition")$message
+  log_errors(nseed, error_msg, pid = pids, results_folder = results_folder)
+  
+  PIPs_bkmr <- NULL
+  performance_bkmr <- NULL
+}
+
+start_time2 <- now()
+fit_gsbart.pb <- pb_gsbart(X = Xtr, Y = Ytr, Z = Ztr, Znew = Ztest, Xnew = as.matrix(Xtest),
+                           num_burn = num_burn, num_save = num_save, num_thin = num_thin, 
+                           alpha_val = alpha_val, alpha_comp = alpha_comp, 
+                           alpha_scale = alpha_scale, alpha_comp_scale = alpha_comp_scale,
+                           group = group, num_tree = 20)
 
 
-hfit_bkmr_test <- lm(h_test_bkmr~h_true_test)
+h_train_soft <- colMeans(fit_gsbart.pb$h_train)
+h_test_soft <- colMeans(fit_gsbart.pb$h_test)
 
-c(inter_bkmr_test, slope_bkmr_test) %<-% coef(hfit_bkmr_test)
-rs_bkmr_test <- summary(hfit_bkmr_test)$r.squared
-se_bkmr_test <- summary(hfit_bkmr_test)$sigma
+time_taken2 <- as.duration(now() - start_time2)
 
-performance_bkmr <- data.frame(BKMR_train = c(inter_bkmr_train, slope_bkmr_train,
-                                              rs_bkmr_train, se_bkmr_train),
-                               BKMR_test = c(inter_bkmr_test, slope_bkmr_test,
-                                             rs_bkmr_test, se_bkmr_test))
+PIPs_gsbart.pb <- calPIPs_gsbart(fit = fit_gsbart.pb, group = group, vars = Ztr)
 
-row.names(performance_bkmr) <- c("Intercept", "Slope", "R-squared", "StdError")
-
-
+# performance check for soft BART estimates
 hfit_bart_train <- lm(h_train_soft~h_true_train)
 
 c(inter_bart_train, slope_bart_train) %<-% coef(hfit_bart_train)
 rs_bart_train <- summary(hfit_bart_train)$r.squared
 se_bart_train <- summary(hfit_bart_train)$sigma
+
 
 hfit_test_bart <- lm(h_test_soft~h_true_test)
 
@@ -237,64 +246,17 @@ performance_softbart <- data.frame(SoftBART_train = c(inter_bart_train, slope_ba
 
 row.names(performance_softbart) <- c("Intercept", "Slope", "R-squared", "StdError")
 
+##########################################
+# ggplot GAM results.
 
-print(performance_bkmr)
-print(performance_softbart)
-
-###############################################################################
-# GAM approximate the posterior samples.
-library(mgcv)
-library(dplyr)
 library(ggplot2)
-
-## BKMR posterior samples
-h_est_val <- SamplePred(fitkm, Znew = Ztest, Xnew = matrix(rep(0, nrow(Ztest)*ncol(Xtest)), ncol = ncol(Xtest)))
-
-htest_bkmr_sampl <- t(as.matrix(h_est_val))
-htest_bkmr_mean <- as.matrix(colMeans(h_est_val))
-
-GAMfit_bkmr <- gam(htest_bkmr_mean ~
-                     s(z1) + 
-                     s(z2) +
-                     s(z3) + 
-                     s(z4) + 
-                     s(z5)+ 
-                     s(z6) + 
-                     s(z7) + 
-                     s(z8)+
-                     s(z9) + 
-                     s(z10) + s(z11) + s(z12) + s(z13) + s(z14) + s(z15),
-                   data = as.data.frame(data_test$Z))
-
-
-## gsBART posterior samples
-htest_gsbart_sampl <- t(as.matrix(fit_gsbart$h_test))
-htest_gsbart_mean  <- as.matrix(colMeans(fit_gsbart$h_test))
-
-GAMfit_gsbart <- gam(htest_gsbart_mean ~
-                       s(z1) + 
-                       s(z2) +
-                       s(z3) + 
-                       s(z4) + 
-                       s(z5)+ 
-                       s(z6) + 
-                       s(z7) + 
-                       s(z8)+
-                       s(z9) + 
-                       s(z10) + s(z11) + s(z12) + s(z13) + s(z14) + s(z15),
-                     data = as.data.frame(data_test$Z))
-
-
-# plot smooth items
-gam.pred.bkmr <- predict(GAMfit_bkmr, newdata = as.data.frame(Ztest), type = "terms",
-                         se.fit = TRUE)
-gam.pred.gsbart <- predict(GAMfit_gsbart, newdata = as.data.frame(Ztest), type = "terms",
-                           se.fit = TRUE)
-
-gamfit.bkmr <- gam.pred.bkmr$fit
-gamfit.gsbart <- gam.pred.gsbart$fit
-
-Ztest <- dat_test$Z
+library(tidyr)
+library(dplyr)
+library(patchwork)
+library(cowplot)
+library(RColorBrewer)
+library(ggpubr)
+library(stringr)
 
 
 sfunc <- function(u,a=1, b = .3){
@@ -333,7 +295,7 @@ Href <- function(z, index = c(1:2, 4:6), idx = 1, h = 3){
   
   if(idx ==1){
     u = 1/6*(z[idx] + Zquant[index[2]] + 2*Zquant[index[3]] + 2*Zquant[index[4]] + 3*Zquant[index[5]] +
-               1/2*z[idx]*Zquant[index[2]] + 1/3*Zquant[index[3]]*Zquant[index[4]]*Zquant[index[5]])
+               1/2*z[idx]*Zquant[index[2]] + 1/3*Zquant[index[3]]*Zquant[index[4]]*Zquant[index[5]])   # H2 per se.
     
   }else if(idx ==2){
     u = 1/6*(Zquant[index[1]] + z[idx] + 2*Zquant[index[3]] + 2*Zquant[index[4]] + 3*Zquant[index[5]] +
@@ -411,38 +373,40 @@ Href4_75 <- apply(Ztest, 1, \(x) Href(x, idx = 4))
 Href5_75 <- apply(Ztest, 1, \(x) Href(x, idx = 5))
 Href6_75 <- apply(Ztest, 1, \(x) Href(x, idx = 6))
 
+
 # plots for relevant exposures z1, z2, z4, z5, z6.
 
 df_z1 <- data.frame(z1 = Ztest[,"z1"], BKMR = gam.pred.smt.bkmr[,"s(z1)"], 
-                    SoftBART = gamfit.gsbart[,"s(z1)"],
+                    SoftBART = gam.pred.smt.gsbart_ntr50[,"s(z1)"],
                     Quant50 = Href1, Quant25 = Href1_25, Quant75 = Href1_75) %>% 
   pivot_longer(cols = c(BKMR, SoftBART, Quant50, Quant25, Quant75), names_to = "Label", values_to = "smooth") %>% 
   mutate(Type = ifelse(Label %in% c("BKMR", "SoftBART"), "Model", "Quantile"))
 
 
 df_z2 <- data.frame(z2 = Ztest[,"z2"], BKMR = gam.pred.smt.bkmr[,"s(z2)"], 
-                    SoftBART = gamfit.gsbart[,"s(z2)"],
+                    SoftBART = gam.pred.smt.gsbart_ntr50[,"s(z2)"],
                     Quant50 = Href2, Quant25 = Href2_25, Quant75 = Href2_75) %>% 
   pivot_longer(cols = c(BKMR, SoftBART, Quant50, Quant25, Quant75), names_to = "Label", values_to = "smooth") %>% 
   mutate(Type = ifelse(Label %in% c("BKMR", "SoftBART"), "Model", "Quantile"))
 
 df_z4 <- data.frame(z4 = Ztest[,"z4"], BKMR = gam.pred.smt.bkmr[,"s(z4)"], 
-                    SoftBART = gamfit.gsbart[,"s(z4)"],
+                    SoftBART = gam.pred.smt.gsbart_ntr50[,"s(z4)"],
                     Quant50 = Href4, Quant25 = Href4_25, Quant75 = Href4_75) %>% 
   pivot_longer(cols = c(BKMR, SoftBART, Quant50, Quant25, Quant75), names_to = "Label", values_to = "smooth") %>% 
   mutate(Type = ifelse(Label %in% c("BKMR", "SoftBART"), "Model", "Quantile"))
 
 df_z5 <- data.frame(z5 = Ztest[,"z5"], BKMR = gam.pred.smt.bkmr[,"s(z5)"], 
-                    SoftBART = gamfit.gsbart[,"s(z5)"],
+                    SoftBART = gam.pred.smt.gsbart_ntr50[,"s(z5)"],
                     Quant50 = Href5, Quant25 = Href5_25, Quant75 = Href5_75) %>% 
   pivot_longer(cols = c(BKMR, SoftBART, Quant50, Quant25, Quant75), names_to = "Label", values_to = "smooth") %>% 
   mutate(Type = ifelse(Label %in% c("BKMR", "SoftBART"), "Model", "Quantile"))
 
 df_z6 <- data.frame(z6 = Ztest[,"z6"], BKMR = gam.pred.smt.bkmr[,"s(z6)"], 
-                    SoftBART = gamfit.gsbart[,"s(z6)"],
+                    SoftBART = gam.pred.smt.gsbart_ntr50[,"s(z6)"],
                     Quant50 = Href6, Quant25 = Href6_25, Quant75 = Href6_75) %>% 
   pivot_longer(cols = c(BKMR, SoftBART, Quant50, Quant25, Quant75), names_to = "Label", values_to = "smooth") %>% 
   mutate(Type = ifelse(Label %in% c("BKMR", "SoftBART"), "Model", "Quantile"))
+
 
 
 common_theme <- theme(
@@ -478,6 +442,7 @@ label_map <- c("SoftBART" = '"GAM Approximation for modified BART"',
                "Quant50" = "True~h[3]~'with Remaining at Median'",
                "Quant75" = "True~h[3]~'with Remaining at 3rd Quartile'"
 )
+
 
 # prepare legend
 colors_def <- scales::hue_pal()(length(names(label_map)))
@@ -534,6 +499,7 @@ p4 <- ggplot(out$data, aes(z5, smooth, colour = Label)) +
   scale_color_manual(values = color_map, labels = out$labels)
 
 
+
 # Use long description legend labels
 common_theme <- theme(
   axis.title = element_text(size = 12),
@@ -555,10 +521,17 @@ legend_only <- as_ggplot(get_legend(
   
 ))
 
+
+
 final_plot2 <- (p1 + p2) / (p3 + legend_only) +
   plot_annotation(
     theme = theme(plot.title = element_text(size = 16, face = "bold")
     ))
 final_plot2 + plot_layout(guides = "collect")
+
+
+
+
+
 
 

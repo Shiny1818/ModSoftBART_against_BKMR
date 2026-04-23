@@ -2,8 +2,7 @@
 % Please edit documentation in R/calPIPs_gsbart.R
 \name{calPIPs_gsbart}
 \alias{calPIPs_gsbart}
-\title{Calculate group and component PIPs for a fitted gsbart model
-Computes posterior inclusion probabilities (PIPs) from a fitted \code{gsbart} regression object. The function can return PIPs at the group level and, when applicable, at the component or variable level.}
+\title{Calculate group and component PIPs for a fitted gsbart model}
 \usage{
 calPIPs_gsbart(fit, group = NULL, vars = NULL)
 }
@@ -18,6 +17,5 @@ calPIPs_gsbart(fit, group = NULL, vars = NULL)
 A list, vector, matrix, or data frame containing calculated group and/or component posterior inclusion probabilities, depending on the structure of \code{fit}, \code{group}, and \code{vars}.
 }
 \description{
-Calculate group and component PIPs for a fitted gsbart model
 Computes posterior inclusion probabilities (PIPs) from a fitted \code{gsbart} regression object. The function can return PIPs at the group level and, when applicable, at the component or variable level.
 }
