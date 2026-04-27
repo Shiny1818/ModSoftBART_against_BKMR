@@ -1,6 +1,5 @@
 This repository contains the code for the accepted paper\
-**“Tailoring Bayesian Additive Regression Trees (BART) for Environmental Mixture Studies”**
-Kaizong Ye, Zhen Chen, Shanshan Zhao
+**“Tailoring Bayesian Additive Regression Trees (BART) for Environmental Mixture Studies”** by Kaizong Ye, Zhen Chen, & Shanshan Zhao
 
 ## Contents
 
