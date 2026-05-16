@@ -1159,8 +1159,6 @@ arma::uvec get_var_counts_by_variable(std::vector<Node*>& forest, const Hypers& 
 
 
 void UpdateS(std::vector<Node*>& forest, Hypers& hypers) {
-  //Debug print initialized s
-  // Rcpp::Rcout << "Before updating s = " << hypers.s << std::endl;
   
   // Get shape vector for updating s
   vec shape_up = hypers.alpha / ((double)hypers.s.size()) * ones<vec>(hypers.s.size());
@@ -1175,35 +1173,12 @@ void UpdateS(std::vector<Node*>& forest, Hypers& hypers) {
   hypers.logs = hypers.logs - log_sum_exp(hypers.logs);
   hypers.s = exp(hypers.logs);
   
-  // Debug print the parameter settings in Hypers
-  // Rcpp::Rcout << "hyperparameter alpha = " << hypers.alpha << std::endl;
-  // Rcpp::Rcout << "After updating s = " << hypers.s << std::endl;
-  // 
-  // Rcpp::Rcout << "hyperparameter alpha_comp_vec = " << hypers.alpha_comp_vec << std::endl;
 
-  // Debug print individual elements in omega_group
-  // for (size_t g = 0; g < hypers.omega_group.size(); ++g) {
-  //   Rcpp::Rcout << "Before updating omega_group[" << g << "] = " << hypers.omega_group[g] << std::endl;
-  // }
-  // // Debug print before updating omega_group
-  // Rcpp::Rcout << "Before updating omega_group, size = " << hypers.omega_group.size() << std::endl;
-  // 
   // If grouping exists, update within-group probabilities
   if(hypers.group.max() + 1 < hypers.group.size()){
     UpdateOmegaGroup(forest, hypers);
   }
   
-  // Debug print after updating omega_group
-  // for (size_t g = 0; g < hypers.omega_group.size(); ++g) {
-  //   Rcpp::Rcout << "After updating omega_group[" << g << "] = " << hypers.omega_group[g] << std::endl;
-  // }
-  // // Debug print after updating omega_group
-  // Rcpp::Rcout << "After updating omega_group, size = " << hypers.omega_group.size() << std::endl;
-  // 
-  // Print the sizes of individual elements in omega_group
-  // for (size_t g = 0; g < hypers.omega_group.size(); ++g) {
-  //   Rcpp::Rcout << "omega_group[" << g << "].size() = " << hypers.omega_group[g].size() << std::endl;
-  // }
 }
 
 
@@ -1211,9 +1186,6 @@ void UpdateOmegaGroup(std::vector<Node*>& forest, Hypers& hypers) {
   for (size_t g = 0; g < hypers.group_to_vars.size(); g++) {
     int num_vars_in_group = hypers.group_to_vars[g].size();
     
-    // // Debug print for omega_group before updating
-    // Rcpp::Rcout << "Before updating omega_group[" << g << "], size = " << hypers.omega_group[g].size() << std::endl;
-    // 
     // Initialize the shape parameters for the within-group Dirichlet distribution
     arma::vec shape_up_vars = hypers.alpha_comp_vec(g) / ((double)hypers.group_to_vars[g].size()) * arma::ones<arma::vec>(num_vars_in_group);
     
@@ -1229,10 +1201,6 @@ void UpdateOmegaGroup(std::vector<Node*>& forest, Hypers& hypers) {
     hypers.logomega_group[g] = hypers.logomega_group[g] - log_sum_exp(hypers.logomega_group[g]);
     hypers.omega_group[g] = arma::exp(hypers.logomega_group[g]);
     
-    // // Debug print after updating
-    // Rcpp::Rcout << "After updating omega_group[" << g << "], size = " << hypers.omega_group[g].size() << std::endl;
-    // Rcpp::Rcout << "After updating logomega_group[" << g << "] = " << hypers.logomega_group[g] << std::endl;
-    // 
   }
 }
 
